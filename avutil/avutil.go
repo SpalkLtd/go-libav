@@ -824,6 +824,14 @@ func (f *Frame) GetBufferWithAlignment(alignment int) error {
 	return nil
 }
 
+func (f *Frame) MakeWritable() error {
+	code := C.av_frame_make_writable(f.CAVFrame)
+	if code < 0 {
+		return NewErrorFromCode(ErrorCode(code))
+	}
+	return nil
+}
+
 func (f *Frame) Data(index int) unsafe.Pointer {
 	return unsafe.Pointer(&f.CAVFrame.data[index])
 }
@@ -1547,7 +1555,8 @@ func (a *AudioFifo) Write(data unsafe.Pointer, nb_samples int) (int, error) {
 			return 0, errors.New("No samples provided to write to Fifo")
 		}
 		cNbSamples := C.int(nb_samples)
-		cCode := C.av_audio_fifo_write(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples)
+		var cCode C.int
+		cCode = C.av_audio_fifo_write(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples)
 		if cCode < 0 {
 			return 0, NewErrorFromCode(ErrorCode(cCode))
 		} else {
@@ -1600,8 +1609,8 @@ func (a *AudioFifo) PeekAt(nb_samples, offset int, frame *Frame) (int, error) {
 	frame.SetSampleFormat(a.SampleFmt)
 	frame.SetChannelLayout(a.ChannelLayout)
 	frame.SetNumberOfSamples(nb_samples)
-	// Allocate the frame buffer
-	frame.GetBuffer()
+	// Allocate the frame buffer if necessary
+	frame.MakeWritable()
 
 	data := unsafe.Pointer(&((*frame.CAVFrame).data))
 	cCode := C.av_audio_fifo_peek_at(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples, cOffset)
@@ -1646,8 +1655,9 @@ func (a *AudioFifo) Read(nb_samples int, frame *Frame) (int, error) {
 	frame.SetSampleFormat(a.SampleFmt)
 	frame.SetChannelLayout(a.ChannelLayout)
 	frame.SetNumberOfSamples(nb_samples)
-	// Allocate the frame buffer
-	frame.GetBuffer()
+	// Allocate the frame buffer if necessary
+	frame.MakeWritable()
+
 	data := unsafe.Pointer(&((*frame.CAVFrame).data))
 	cCode := C.av_audio_fifo_read(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples)
 	if cCode < 0 {

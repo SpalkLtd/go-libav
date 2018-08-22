@@ -584,6 +584,10 @@ func (s *Stream) EndPTS() int64 {
 	return int64(C.av_stream_get_end_pts(s.CAVStream))
 }
 
+func (s *Stream) Free() {
+	C.av_freep(unsafe.Pointer(s.CAVStream))
+}
+
 type Context struct {
 	CAVFormatContext *C.AVFormatContext
 }

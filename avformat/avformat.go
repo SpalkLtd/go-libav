@@ -598,7 +598,8 @@ func NewContextForInput() (*Context, error) {
 
 func NewContextForOutput(output *Output) (*Context, error) {
 	var cCtx *C.AVFormatContext
-	code := C.avformat_alloc_output_context2(&cCtx, output.CAVOutputFormat, nil, nil)
+	var code C.int
+	code = C.avformat_alloc_output_context2(&cCtx, output.CAVOutputFormat, nil, nil)
 	if code < 0 {
 		return nil, avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -681,7 +682,8 @@ func (ctx *Context) WriteHeader(options *avutil.Dictionary) error {
 	if options != nil {
 		cOptions = (**C.AVDictionary)(options.Pointer())
 	}
-	code := C.avformat_write_header(ctx.CAVFormatContext, cOptions)
+	var code C.int
+	code = C.avformat_write_header(ctx.CAVFormatContext, cOptions)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -689,7 +691,8 @@ func (ctx *Context) WriteHeader(options *avutil.Dictionary) error {
 }
 
 func (ctx *Context) WriteTrailer() error {
-	code := C.av_write_trailer(ctx.CAVFormatContext)
+	var code C.int
+	code = C.av_write_trailer(ctx.CAVFormatContext)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -702,7 +705,8 @@ func (ctx *Context) ReadFrame() (*avcodec.Packet, error) {
 		return nil, err
 	}
 	cPkt := (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
-	code := C.av_read_frame(ctx.CAVFormatContext, cPkt)
+	var code C.int
+	code = C.av_read_frame(ctx.CAVFormatContext, cPkt)
 	if code < 0 {
 		// if avutil.ErrorCode(code) == avutil.ErrorCodeEOF {
 		// 	return nil, nil
@@ -718,7 +722,8 @@ func (ctx *Context) ReadFrame() (*avcodec.Packet, error) {
  */
 func (ctx *Context) ReadPlay() error {
 
-	code := C.av_read_play(ctx.CAVFormatContext)
+	var code C.int
+	code = C.av_read_play(ctx.CAVFormatContext)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -731,7 +736,8 @@ func (ctx *Context) ReadPlay() error {
  */
 func (ctx *Context) ReadPause() error {
 
-	code := C.av_read_pause(ctx.CAVFormatContext)
+	var code C.int
+	code = C.av_read_pause(ctx.CAVFormatContext)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -743,7 +749,8 @@ func (ctx *Context) WriteFrame(pkt *avcodec.Packet) error {
 	if cPkt != nil {
 		cPkt = (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
 	}
-	code := C.av_write_frame(ctx.CAVFormatContext, cPkt)
+	var code C.int
+	code = C.av_write_frame(ctx.CAVFormatContext, cPkt)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -755,7 +762,8 @@ func (ctx *Context) InterleavedWriteFrame(pkt *avcodec.Packet) error {
 	if pkt != nil {
 		cPkt = (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
 	}
-	code := C.av_interleaved_write_frame(ctx.CAVFormatContext, cPkt)
+	var code C.int
+	code = C.av_interleaved_write_frame(ctx.CAVFormatContext, cPkt)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -877,7 +885,8 @@ func (ctx *Context) OpenInput(fileName string, input *Input, options *avutil.Dic
 	if options != nil {
 		cOptions = (**C.AVDictionary)(options.Pointer())
 	}
-	code := C.avformat_open_input(&ctx.CAVFormatContext, cFileName, cInput, cOptions)
+	var code C.int
+	code = C.avformat_open_input(&ctx.CAVFormatContext, cFileName, cInput, cOptions)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -898,7 +907,8 @@ func (ctx *Context) FindStreamInfo(options []*avutil.Dictionary) error {
 		cOptions = newCAVDictionaryArrayFromDictionarySlice(options[:count])
 		defer freeCAVDictionaryArray(cOptions)
 	}
-	code := C.avformat_find_stream_info(ctx.CAVFormatContext, cOptions)
+	var code C.int
+	code = C.avformat_find_stream_info(ctx.CAVFormatContext, cOptions)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -926,7 +936,8 @@ func (ctx *Context) GuessFrameRate(stream *Stream, frame *avutil.Frame) *avutil.
 }
 
 func (ctx *Context) SeekToTimestamp(streamIndex int, min, target, max int64, flags SeekFlags) error {
-	code := C.avformat_seek_file(ctx.CAVFormatContext, C.int(streamIndex), C.int64_t(min), C.int64_t(target), C.int64_t(max), C.int(flags))
+	var code C.int
+	code = C.avformat_seek_file(ctx.CAVFormatContext, C.int(streamIndex), C.int64_t(min), C.int64_t(target), C.int64_t(max), C.int(flags))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -944,7 +955,8 @@ func (ctx *Context) ControlMessage(msg int, data interface{}) error {
 		pointer = unsafe.Pointer(&cData)
 	}
 
-	code := C.exec_cb(ctx.Output().CAVOutputFormat.control_message, ctx.CAVFormatContext, C.int(msg), pointer, 0)
+	var code C.int
+	code = C.exec_cb(ctx.Output().CAVOutputFormat.control_message, ctx.CAVFormatContext, C.int(msg), pointer, 0)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -972,7 +984,8 @@ func OpenIOContext(url string, flags IOFlags, cb *IOInterruptCallback, options *
 		cOptions = (**C.AVDictionary)(options.Pointer())
 	}
 	var cCtx *C.AVIOContext
-	code := C.avio_open2(&cCtx, cURL, (C.int)(flags), cCb, cOptions)
+	var code C.int
+	code = C.avio_open2(&cCtx, cURL, (C.int)(flags), cCb, cOptions)
 	if code < 0 {
 		return nil, avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -989,7 +1002,8 @@ func (ctx *IOContext) Size() int64 {
 
 func (ctx *IOContext) Close() error {
 	if ctx.CAVIOContext != nil {
-		code := C.avio_closep(&ctx.CAVIOContext)
+		var code C.int
+		code = C.avio_closep(&ctx.CAVIOContext)
 		if code < 0 {
 			return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 		}
@@ -1047,7 +1061,8 @@ func FormatNumberedSequence(format string, num int) (string, error) {
 	size := C.size_t(1024)
 	buf := (*C.char)(C.av_mallocz(size))
 	defer C.av_free(unsafe.Pointer(buf))
-	code := C.av_get_frame_filename(buf, C.int(size-1), cFormat, C.int(num))
+	var code C.int
+	code = C.av_get_frame_filename(buf, C.int(size-1), cFormat, C.int(num))
 	if code < 0 {
 		return "", avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}

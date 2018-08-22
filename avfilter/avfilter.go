@@ -256,7 +256,8 @@ func (ctx *Context) Init() error {
 func (ctx *Context) InitWithString(args string) error {
 	cArgs := C.CString(args)
 	defer C.free(unsafe.Pointer(cArgs))
-	code := C.avfilter_init_str(ctx.CAVFilterContext, cArgs)
+	var code C.int
+	code = C.avfilter_init_str(ctx.CAVFilterContext, cArgs)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -265,10 +266,11 @@ func (ctx *Context) InitWithString(args string) error {
 
 func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
 	var cOptions **C.AVDictionary
+	var code C.int
 	if options != nil {
 		cOptions = (**C.AVDictionary)(options.Pointer())
 	}
-	code := C.avfilter_init_dict(ctx.CAVFilterContext, cOptions)
+	code = C.avfilter_init_dict(ctx.CAVFilterContext, cOptions)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -278,7 +280,8 @@ func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
 func (ctx *Context) Link(srcPad uint, dst *Context, dstPad uint) error {
 	cSrc := ctx.CAVFilterContext
 	cDst := dst.CAVFilterContext
-	code := C.avfilter_link(cSrc, C.uint(srcPad), cDst, C.uint(dstPad))
+	var code C.int
+	code = C.avfilter_link(cSrc, C.uint(srcPad), cDst, C.uint(dstPad))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -290,7 +293,8 @@ func (ctx *Context) AddFrame(frame *avutil.Frame) error {
 	if frame != nil {
 		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
 	}
-	code := C.av_buffersrc_add_frame(ctx.CAVFilterContext, cFrame)
+	var code C.int
+	code = C.av_buffersrc_add_frame(ctx.CAVFilterContext, cFrame)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -302,7 +306,8 @@ func (ctx *Context) AddFrameWithFlags(frame *avutil.Frame, flags BufferSrcFlags)
 	if frame != nil {
 		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
 	}
-	code := C.av_buffersrc_add_frame_flags(ctx.CAVFilterContext, cFrame, (C.int)(flags))
+	var code C.int
+	code = C.av_buffersrc_add_frame_flags(ctx.CAVFilterContext, cFrame, (C.int)(flags))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -314,7 +319,8 @@ func (ctx *Context) WriteFrame(frame *avutil.Frame) error {
 	if frame != nil {
 		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
 	}
-	code := C.av_buffersrc_write_frame(ctx.CAVFilterContext, cFrame)
+	var code C.int
+	code = C.av_buffersrc_write_frame(ctx.CAVFilterContext, cFrame)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -326,7 +332,8 @@ func (ctx *Context) GetFrame(frame *avutil.Frame) error {
 	if frame != nil {
 		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
 	}
-	code := C.av_buffersink_get_frame(ctx.CAVFilterContext, cFrame)
+	var code C.int
+	code = C.av_buffersink_get_frame(ctx.CAVFilterContext, cFrame)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -405,7 +412,8 @@ func (ctx *Context) FrameRate() *avutil.Rational {
 func (ctx *Context) SendCommand(cmd, args string) error {
 	cmdString := C.CString(cmd)
 	argsString := C.CString(args)
-	code := C.avfilter_process_command(ctx.CAVFilterContext, cmdString, argsString, nil, 0, C.int(0))
+	var code C.int
+	code = C.avfilter_process_command(ctx.CAVFilterContext, cmdString, argsString, nil, 0, C.int(0))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(int(code)))
 	}
@@ -460,7 +468,8 @@ func (g *Graph) Parse(filters string, input, output *InOut) error {
 	defer C.free(unsafe.Pointer(cFilters))
 	cInput := &input.CAVFilterInOut
 	cOutput := &output.CAVFilterInOut
-	code := C.avfilter_graph_parse_ptr(g.CAVFilterGraph, cFilters, cInput, cOutput, nil)
+	var code C.int
+	code = C.avfilter_graph_parse_ptr(g.CAVFilterGraph, cFilters, cInput, cOutput, nil)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -468,7 +477,8 @@ func (g *Graph) Parse(filters string, input, output *InOut) error {
 }
 
 func (g *Graph) Config() error {
-	code := C.avfilter_graph_config(g.CAVFilterGraph, nil)
+	var code C.int
+	code = C.avfilter_graph_config(g.CAVFilterGraph, nil)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -476,7 +486,8 @@ func (g *Graph) Config() error {
 }
 
 func (g *Graph) RequestOldest() error {
-	code := C.avfilter_graph_request_oldest(g.CAVFilterGraph)
+	var code C.int
+	code = C.avfilter_graph_request_oldest(g.CAVFilterGraph)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}

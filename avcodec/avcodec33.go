@@ -50,7 +50,8 @@ func (ctx *Context) CopyTo(dst *Context) error {
 	}
 	defer parameters.Free()
 	cParams := (*C.AVCodecParameters)(unsafe.Pointer(parameters.CAVCodecParameters))
-	code := C.avcodec_parameters_from_context(cParams, ctx.CAVCodecContext)
+	var code C.int
+	code = C.avcodec_parameters_from_context(cParams, ctx.CAVCodecContext)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -78,7 +79,8 @@ func (ctx *Context) SendPacket(pkt *Packet) error {
 
 func (ctx *Context) ReceiveFrame(frame *avutil.Frame) error {
 	cFrame := (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
-	code := C.avcodec_receive_frame(ctx.CAVCodecContext, cFrame)
+	var code C.int
+	code = C.avcodec_receive_frame(ctx.CAVCodecContext, cFrame)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -102,7 +104,8 @@ func (ctx *Context) SendFrame(frame *avutil.Frame) error {
 
 func (ctx *Context) ReceivePacket(pkt *Packet) error {
 	cPkt := (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
-	code := C.avcodec_receive_packet(ctx.CAVCodecContext, cPkt)
+	var code C.int
+	code = C.avcodec_receive_packet(ctx.CAVCodecContext, cPkt)
 	if code < 0 {
 		err := avutil.NewErrorFromCode(avutil.ErrorCode(code))
 		return err

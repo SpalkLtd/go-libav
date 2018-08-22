@@ -314,7 +314,6 @@ func Version() (int, int, int) {
 	return int(C.GO_AVCODEC_VERSION_MAJOR), int(C.GO_AVCODEC_VERSION_MINOR), int(C.GO_AVCODEC_VERSION_MICRO)
 }
 
-
 func RegisterAll() {
 	C.avcodec_register_all()
 }
@@ -372,7 +371,8 @@ func (pkt *Packet) Free() {
 }
 
 func (pkt *Packet) Ref(dst *Packet) error {
-	code := C.av_packet_ref(dst.CAVPacket, pkt.CAVPacket)
+	var code C.int
+	code = C.av_packet_ref(dst.CAVPacket, pkt.CAVPacket)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -718,7 +718,8 @@ func (ctx *Context) OpenWithCodec(codec *Codec, options *avutil.Dictionary) erro
 	if options != nil {
 		cOptions = (**C.AVDictionary)(options.Pointer())
 	}
-	code := C.avcodec_open2(ctx.CAVCodecContext, cCodec, cOptions)
+	var code C.int
+	code = C.avcodec_open2(ctx.CAVCodecContext, cCodec, cOptions)
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}

@@ -717,6 +717,7 @@ func (ctx *Context) OpenWithCodec(codec *Codec, options *avutil.Dictionary) erro
 	var cOptions **C.AVDictionary
 	if options != nil {
 		cOptions = (**C.AVDictionary)(options.Pointer())
+		defer C.av_dict_free(cOptions)
 	}
 	var code C.int
 	code = C.avcodec_open2(ctx.CAVCodecContext, cCodec, cOptions)

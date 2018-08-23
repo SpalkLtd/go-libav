@@ -1604,13 +1604,17 @@ func (a *AudioFifo) Peek(maxSamples int, frame *Frame) (int, error) {
 func (a *AudioFifo) PeekAt(nb_samples, offset int, frame *Frame) (int, error) {
 	cNbSamples := C.int(nb_samples)
 	cOffset := C.int(offset)
-
+	// Ensure we don't leak memory
+	frame.Unref()
 	// Make sure these are set correctly here
 	frame.SetSampleFormat(a.SampleFmt)
 	frame.SetChannelLayout(a.ChannelLayout)
 	frame.SetNumberOfSamples(nb_samples)
-	// Allocate the frame buffer if necessary
-	frame.MakeWritable()
+	// Allocate the frame buffer
+	err := frame.GetBuffer()
+	if err != nil {
+		return 0, err
+	}
 
 	data := unsafe.Pointer(&((*frame.CAVFrame).data))
 	cCode := C.av_audio_fifo_peek_at(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples, cOffset)
@@ -1650,13 +1654,17 @@ func (a *AudioFifo) Read(nb_samples int, frame *Frame) (int, error) {
 	// log.Println(&arr)
 	// log.Println(arr)
 	// data := unsafe.Pointer(arr)
+	frame.Unref()
 
 	// Make sure these are set correctly here
 	frame.SetSampleFormat(a.SampleFmt)
 	frame.SetChannelLayout(a.ChannelLayout)
 	frame.SetNumberOfSamples(nb_samples)
-	// Allocate the frame buffer if necessary
-	frame.MakeWritable()
+	// Allocate the frame buffer
+	err := frame.GetBuffer()
+	if err != nil {
+		return 0, err
+	}
 
 	data := unsafe.Pointer(&((*frame.CAVFrame).data))
 	cCode := C.av_audio_fifo_read(a.CAudioFifo, (*unsafe.Pointer)(data), cNbSamples)

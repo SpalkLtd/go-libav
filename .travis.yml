@@ -17,6 +17,7 @@ before_install:
   - "[[ $TRAVIS_GO_VERSION != 1.8* ]] || go get -u github.com/golang/lint/golint"
   - go get -u github.com/shirou/gopsutil
   - go get -u golang.org/x/sys/unix
+  - sudo rm /etc/apt/sources.list.d/google-chrome.list
   - sudo apt-get update
   - sudo apt-get install -y build-essential yasm libfaac-dev libmp3lame-dev libtheora-dev libvorbis-dev libvpx-dev libx264-dev libxvidcore-dev
 

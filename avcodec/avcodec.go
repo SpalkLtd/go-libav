@@ -390,6 +390,20 @@ func (pkt *Packet) GetDataAt(index int) byte {
 	return byte(C.go_get_data_at((*C.uint8_t)(pkt.Data()), C.int(index)))
 }
 
+// GetDataUnsafe returns a Go slice backed by the underlying C array representing the data
+// of the packet. This slice is not managed by Go garbage collection.
+// The behaviour if the underlying array is freed and then
+// the slice returned by this function is accessed is undefined
+// (read: best-case scenario, panics, worst-case, insidious memory-access errors
+// that will cause you to doubt your own sanity).
+// USE ONLY IF YOU KNOW WHAT YOU'RE DOING.
+// Assume an underlying array of 65,536 bytes will be sufficient for storing data
+// from a packet. This may need to be updated if this is used for things other than
+// MPEGTS packets.
+func (pkt *Packet) GetDataUnsafe() []byte {
+	return (*[1 << 16]byte)(unsafe.Pointer(pkt.CAVPacket.data))[:pkt.Size():pkt.Size()]
+}
+
 func (pkt *Packet) SetData(data unsafe.Pointer) {
 	pkt.CAVPacket.data = (*C.uint8_t)(data)
 }

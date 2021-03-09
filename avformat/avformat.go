@@ -958,6 +958,9 @@ func (ctx *Context) ControlMessage(msg int, data interface{}) (int64, error) {
 }
 
 func (ctx *Context) InterruptBlockingOperation() {
+	if ctx.CAVFormatContext == nil {
+		return
+	}
 	data := C.int(1)
 	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(&data)
 }

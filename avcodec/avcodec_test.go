@@ -2,12 +2,14 @@ package avcodec
 
 import (
 	"bytes"
+	"crypto/rand"
 	"log"
 	"os"
 	"testing"
 
 	"github.com/SpalkLtd/go-libav/avutil"
 	"github.com/shirou/gopsutil/process"
+	"github.com/stretchr/testify/require"
 )
 
 func hasVersion(wantMajor, wantMinor int) bool {
@@ -444,4 +446,32 @@ func findPixelFormatByName(name string, t *testing.T) avutil.PixelFormat {
 		t.Fatalf("pixel format not found")
 	}
 	return pixFmt
+}
+
+func BenchmarkAVPacketGetData(b *testing.B) {
+	pkt, err := NewPacket()
+	randBytes := make([]byte, 188)
+	_, err = rand.Read(randBytes)
+	require.NoError(b, err)
+	pkt.SetBytes(randBytes)
+	require.NoError(b, err)
+	for i := 0; i < b.N; i++ {
+		//Op
+		pkt.GetData()
+	}
+
+}
+
+func BenchmarkAVPacketGetDataAt(b *testing.B) {
+	pkt, err := NewPacket()
+	randBytes := make([]byte, 188)
+	_, err = rand.Read(randBytes)
+	require.NoError(b, err)
+	pkt.SetBytes(randBytes)
+	require.NoError(b, err)
+	for i := 0; i < b.N; i++ {
+		//Op
+		pkt.GetDataAt(1)
+		pkt.GetDataAt(2)
+	}
 }

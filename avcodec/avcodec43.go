@@ -1,3 +1,4 @@
+//go:build ffmpeg43
 // +build ffmpeg43
 
 package avcodec

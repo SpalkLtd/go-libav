@@ -405,7 +405,9 @@ func (ctx *Context) FrameRate() *avutil.Rational {
 
 func (ctx *Context) SendCommand(cmd, args string, returnLength int) (string, error) {
 	cmdString := C.CString(cmd)
+	defer C.free(unsafe.Pointer(cmdString))
 	argsString := C.CString(args)
+	defer C.free(unsafe.Pointer(argsString))
 	var res *C.char
 	var res_len C.int
 	if returnLength > 0 {
@@ -415,6 +417,7 @@ func (ctx *Context) SendCommand(cmd, args string, returnLength int) (string, err
 			str.WriteString("a")
 		}
 		res = C.CString(str.String())
+		defer C.free(unsafe.Pointer(res))
 		res_len = C.int(returnLength)
 	}
 	code := C.avfilter_process_command(ctx.CAVFilterContext, cmdString, argsString, res, res_len, C.int(0))

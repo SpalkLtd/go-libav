@@ -16,3 +16,4 @@
 - Make `avcodec.Packet.Free` a noop on a nil packet (aligns with libav convention)
 - Add `GetDataUnsafe` method to Packet, which returns a Go slice which directly references the underlying C array representing the data of the packet
 - Nil check CAVFormatContext before using InterruptBlockingOperation as it can be called before it is set up properly
+- Fix memory leak in FIFO SendCommand code

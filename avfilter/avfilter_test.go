@@ -8,6 +8,7 @@ import (
 
 	"github.com/SpalkLtd/go-libav/avutil"
 	"github.com/shirou/gopsutil/process"
+	"gopkg.in/stretchr/testify.v1/require"
 )
 
 func TestVersion(t *testing.T) {
@@ -47,14 +48,16 @@ func TestFilterByNameOK(t *testing.T) {
 }
 
 func TestFilterByNameRequiredNameParam(t *testing.T) {
-	filter := FindFilterByName("")
+	filter, err := FindFilterByName("")
+	require.NoError(t, err)
 	if filter != nil {
 		t.Fatalf("Expecting filter is nil")
 	}
 }
 
 func TestFilterByNameInvalidNameParam(t *testing.T) {
-	filter := FindFilterByName("aaa")
+	filter, err := FindFilterByName("aaa")
+	require.NoError(t, err)
 	if filter != nil {
 		t.Fatalf("Expecting filter is nil")
 	}
@@ -102,7 +105,8 @@ func TestGraphAutoConvert(t *testing.T) {
 }
 
 func testFilterByName(t *testing.T, name string) *Filter {
-	filter := FindFilterByName(name)
+	filter, err := FindFilterByName(name)
+	require.NoError(t, err)
 	if filter == nil {
 		t.Fatalf("Expecting filter")
 	}

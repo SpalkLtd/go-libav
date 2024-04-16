@@ -16,6 +16,7 @@ import (
 	"github.com/SpalkLtd/go-libav/avcodec"
 	"github.com/SpalkLtd/go-libav/avutil"
 	"github.com/shirou/gopsutil/process"
+	"gopkg.in/stretchr/testify.v1/require"
 )
 
 func TestVersion(t *testing.T) {
@@ -495,8 +496,8 @@ func testCopy(t *testing.T, iCtx *Context) (*Context, *Stream) {
 }
 
 func testWritePacket(t *testing.T, iCtx *Context, oCtx *Context) *avcodec.Packet {
-	pkt := testNewPacket(t)
-	iCtx.ReadFrame(pkt)
+	pkt, err := iCtx.ReadFrame()
+	require.NoError(t, err)
 	if err := oCtx.InterleavedWriteFrame(pkt); err != nil {
 		t.Fatal(err)
 	}

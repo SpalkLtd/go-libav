@@ -18,3 +18,4 @@
 - Nil check CAVFormatContext before using InterruptBlockingOperation as it can be called before it is set up properly
 - Fix memory leak in FIFO SendCommand code
 - Add go-mod
+- Don't store go-lang stack variables in native heap

@@ -586,6 +586,7 @@ func (s *Stream) EndPTS() int64 {
 
 type Context struct {
 	CAVFormatContext *C.AVFormatContext
+	interruptPtr     *C.int
 }
 
 func NewContextForInput() (*Context, error) {
@@ -608,6 +609,7 @@ func NewContextForOutput(output *Output) (*Context, error) {
 func NewContextFromC(cCtx unsafe.Pointer) *Context {
 	ctx := Context{
 		CAVFormatContext: (*C.AVFormatContext)(cCtx),
+		interruptPtr:     (*C.int)(C.malloc(C.sizeof_int)),
 	}
 	ctx.SetInterruptCallback()
 	return &ctx
@@ -617,6 +619,11 @@ func (ctx *Context) Free() {
 	if ctx.CAVFormatContext != nil {
 		defer C.avformat_free_context(ctx.CAVFormatContext)
 		ctx.CAVFormatContext = nil
+	}
+
+	if ctx.interruptPtr != nil {
+		C.free(unsafe.Pointer(ctx.interruptPtr))
+		ctx.interruptPtr = nil
 	}
 }
 
@@ -961,13 +968,13 @@ func (ctx *Context) InterruptBlockingOperation() {
 	if ctx.CAVFormatContext == nil {
 		return
 	}
-	data := C.int(1)
-	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(&data)
+	*ctx.interruptPtr = 1
+	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(ctx.interruptPtr)
 }
 
 func (ctx *Context) UninterruptBlockingOperation() {
-	data := C.int(0)
-	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(&data)
+	*ctx.interruptPtr = 0
+	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(ctx.interruptPtr)
 }
 
 func (ctx *Context) GetOutputTimestamp(streamIdx int) (int, int, error) {
@@ -1020,6 +1027,7 @@ func (ctx *IOContext) Close() error {
 			return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 		}
 	}
+
 	return nil
 }
 

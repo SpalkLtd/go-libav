@@ -1066,6 +1066,20 @@ func (oa *OptionAccessor) GetInt64OptionWithFlags(name string, flags OptionSearc
 	return int64(cOut), true, nil
 }
 
+func (oa *OptionAccessor) GetInt64OptionC(name *C.char) (int64, bool, error) {
+	return oa.GetInt64OptionWithFlagsC(name, OptionSearchChildren)
+}
+
+func (oa *OptionAccessor) GetInt64OptionWithFlagsC(name *C.char, flags OptionSearchFlags) (int64, bool, error) {
+	var cOut C.int64_t
+	searchFlags := oa.searchFlags(flags)
+	code := C.av_opt_get_int(oa.obj, name, searchFlags, &cOut)
+	if code < 0 {
+		return 0, false, getOptionError(code)
+	}
+	return int64(cOut), true, nil
+}
+
 func (oa *OptionAccessor) GetFloat64Option(name string) (float64, bool, error) {
 	return oa.GetFloat64OptionWithFlags(name, OptionSearchChildren)
 }
@@ -1220,6 +1234,19 @@ func (oa *OptionAccessor) SetInt64OptionWithFlags(name string, value int64, flag
 	defer C.free(unsafe.Pointer(cName))
 	searchFlags := oa.searchFlags(flags)
 	code := C.av_opt_set_int(oa.obj, cName, (C.int64_t)(value), searchFlags)
+	if code < 0 {
+		return NewErrorFromCode(ErrorCode(code))
+	}
+	return nil
+}
+
+func (oa *OptionAccessor) SetInt64OptionC(name *C.char, value int64) error {
+	return oa.SetInt64OptionWithFlagsC(name, value, OptionSearchChildren)
+}
+
+func (oa *OptionAccessor) SetInt64OptionWithFlagsC(name *C.char, value int64, flags OptionSearchFlags) error {
+	searchFlags := oa.searchFlags(flags)
+	code := C.av_opt_set_int(oa.obj, name, (C.int64_t)(value), searchFlags)
 	if code < 0 {
 		return NewErrorFromCode(ErrorCode(code))
 	}

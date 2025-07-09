@@ -711,12 +711,18 @@ func (ctx *Context) ReadFrame() (*avcodec.Packet, error) {
 	cPkt := (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
 	code := C.av_read_frame(ctx.CAVFormatContext, cPkt)
 	if code < 0 {
-		// if avutil.ErrorCode(code) == avutil.ErrorCodeEOF {
-		// 	return nil, nil
-		// }
 		return nil, avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
 	return pkt, nil
+}
+
+func (ctx *Context) ReadPacketFrame(pkt *avcodec.Packet) error {
+	cPkt := (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
+	code := C.av_read_frame(ctx.CAVFormatContext, cPkt)
+	if code < 0 {
+		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
+	}
+	return nil
 }
 
 /**

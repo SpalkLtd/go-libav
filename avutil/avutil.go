@@ -1080,6 +1080,20 @@ func (oa *OptionAccessor) GetInt64OptionWithFlagsC(name unsafe.Pointer, flags Op
 	return int64(cOut), true, nil
 }
 
+// GetInt64OptionPtr gets an int64 option and writes it to the provided pointer.
+func (oa *OptionAccessor) GetInt64OptionPtr(name unsafe.Pointer, value *int64) error {
+	return oa.GetInt64OptionWithFlagsPtr(name, value, OptionSearchChildren)
+}
+
+func (oa *OptionAccessor) GetInt64OptionWithFlagsPtr(name unsafe.Pointer, value *int64, flags OptionSearchFlags) error {
+	searchFlags := oa.searchFlags(flags)
+	code := C.av_opt_get_int(oa.obj, (*C.char)(name), searchFlags, (*C.int64_t)(value))
+	if code < 0 {
+		return getOptionError(code)
+	}
+	return nil
+}
+
 func (oa *OptionAccessor) GetFloat64Option(name string) (float64, bool, error) {
 	return oa.GetFloat64OptionWithFlags(name, OptionSearchChildren)
 }

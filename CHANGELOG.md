@@ -20,3 +20,4 @@
 - Add go-mod
 - Don't store go-lang stack variables in native heap
 - Add Get/SetInt64OptionC functions
+- Add GetFrameFlags to avfilter

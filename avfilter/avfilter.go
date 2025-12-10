@@ -66,6 +66,13 @@ const (
 	BufferSrcFlagKeepRef       BufferSrcFlags = C.AV_BUFFERSRC_FLAG_KEEP_REF
 )
 
+type BufferSinkFlags C.int
+
+const (
+	BufferSinkFlagNoRequest BufferSinkFlags = C.AV_BUFFERSINK_FLAG_NO_REQUEST
+	BufferSinkFlagPeek      BufferSinkFlags = C.AV_BUFFERSINK_FLAG_PEEK
+)
+
 type GraphAutoConvertFlags uint
 
 const (
@@ -328,6 +335,18 @@ func (ctx *Context) GetFrame(frame *avutil.Frame) error {
 		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
 	}
 	code := C.av_buffersink_get_frame(ctx.CAVFilterContext, cFrame)
+	if code < 0 {
+		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
+	}
+	return nil
+}
+
+func (ctx *Context) GetFrameWithFlags(frame *avutil.Frame, flags BufferSinkFlags) error {
+	var cFrame *C.AVFrame
+	if frame != nil {
+		cFrame = (*C.AVFrame)(unsafe.Pointer(frame.CAVFrame))
+	}
+	code := C.av_buffersink_get_frame_flags(ctx.CAVFilterContext, cFrame, C.int(flags))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}

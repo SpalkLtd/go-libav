@@ -611,7 +611,9 @@ func NewContextFromC(cCtx unsafe.Pointer) *Context {
 		CAVFormatContext: (*C.AVFormatContext)(cCtx),
 		interruptPtr:     (*C.int)(C.malloc(C.sizeof_int)),
 	}
+	*ctx.interruptPtr = 0
 	ctx.SetInterruptCallback()
+	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(ctx.interruptPtr)
 	return &ctx
 }
 
@@ -975,6 +977,9 @@ func (ctx *Context) InterruptBlockingOperation() {
 		return
 	}
 	*ctx.interruptPtr = 1
+	// Also set opaque here as a safety net, though it should already be set
+	// since NewContextFromC. The critical path is that opaque is set BEFORE
+	// avformat_open_input, so the URLContext's struct-copy gets the pointer.
 	ctx.CAVFormatContext.interrupt_callback.opaque = unsafe.Pointer(ctx.interruptPtr)
 }
 

@@ -249,7 +249,6 @@ func Version() (int, int, int) {
 }
 
 func RegisterAll() {
-	C.avcodec_register_all()
 }
 
 type PacketSideData struct {

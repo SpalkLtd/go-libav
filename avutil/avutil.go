@@ -968,7 +968,7 @@ func (f *Frame) SetOpaque(opaque unsafe.Pointer) {
 }
 
 func (f *Frame) Metadata() *Dictionary {
-	dict := C.av_frame_get_metadata(f.CAVFrame)
+	dict := f.CAVFrame.metadata
 	if dict == nil {
 		return nil
 	}
@@ -977,34 +977,34 @@ func (f *Frame) Metadata() *Dictionary {
 
 func (f *Frame) SetMetadata(dict *Dictionary) {
 	if dict == nil {
-		C.av_frame_set_metadata(f.CAVFrame, nil)
+		f.CAVFrame.metadata = nil
 		return
 	}
-	C.av_frame_set_metadata(f.CAVFrame, dict.value())
+	f.CAVFrame.metadata = dict.value()
 }
 
 func (f *Frame) BestEffortTimestamp() int64 {
-	return int64(C.av_frame_get_best_effort_timestamp(f.CAVFrame))
+	return int64(f.CAVFrame.best_effort_timestamp)
 }
 
 func (f *Frame) PacketDuration() int64 {
-	return int64(C.av_frame_get_pkt_duration(f.CAVFrame))
+	return int64(f.CAVFrame.pkt_duration)
 }
 
 func (f *Frame) ChannelLayout() ChannelLayout {
-	return ChannelLayout(C.av_frame_get_channel_layout(f.CAVFrame))
+	return ChannelLayout(f.CAVFrame.channel_layout)
 }
 
 func (f *Frame) SetChannelLayout(cl ChannelLayout) {
-	C.av_frame_set_channel_layout(f.CAVFrame, C.int64_t(cl))
+	f.CAVFrame.channel_layout = C.uint64_t(cl)
 }
 
 func (f *Frame) Channels() int {
-	return int(C.av_frame_get_channels(f.CAVFrame))
+	return int(f.CAVFrame.channels)
 }
 
 func (f *Frame) SetChannels(n int) {
-	C.av_frame_set_channels(f.CAVFrame, C.int(n))
+	f.CAVFrame.channels = C.int(n)
 }
 
 func (f *Frame) SampleFormat() SampleFormat {
@@ -1016,11 +1016,11 @@ func (f *Frame) SetSampleFormat(sf SampleFormat) {
 }
 
 func (f *Frame) SampleRate() int {
-	return int(C.av_frame_get_sample_rate(f.CAVFrame))
+	return int(f.CAVFrame.sample_rate)
 }
 
 func (f *Frame) SetSampleRate(sr int) {
-	C.av_frame_set_sample_rate(f.CAVFrame, C.int(sr))
+	f.CAVFrame.sample_rate = C.int(sr)
 }
 
 type OptionAccessor struct {

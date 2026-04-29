@@ -185,15 +185,8 @@ const (
 	SeekFlagFrame    SeekFlags = C.AVSEEK_FLAG_FRAME
 )
 
-func init() {
-	RegisterAll()
-}
-
 func Version() (int, int, int) {
 	return int(C.GO_AVFORMAT_VERSION_MAJOR), int(C.GO_AVFORMAT_VERSION_MINOR), int(C.GO_AVFORMAT_VERSION_MICRO)
-}
-
-func RegisterAll() {
 }
 
 func NetworkInit() {

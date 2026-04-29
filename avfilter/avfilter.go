@@ -80,15 +80,8 @@ const (
 	GraphAutoConvertFlagNone GraphAutoConvertFlags = C.GO_AVFILTER_AUTO_CONVERT_NONE
 )
 
-func init() {
-	RegisterAll()
-}
-
 func Version() (int, int, int) {
 	return int(C.GO_AVFILTER_VERSION_MAJOR), int(C.GO_AVFILTER_VERSION_MINOR), int(C.GO_AVFILTER_VERSION_MICRO)
-}
-
-func RegisterAll() {
 }
 
 type Filter struct {

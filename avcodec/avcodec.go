@@ -240,16 +240,8 @@ const (
 	CodecPropTextSub   CodecProps = C.AV_CODEC_PROP_TEXT_SUB
 )
 
-func init() {
-	RegisterAll()
-}
-
 func Version() (int, int, int) {
 	return int(C.GO_AVCODEC_VERSION_MAJOR), int(C.GO_AVCODEC_VERSION_MINOR), int(C.GO_AVCODEC_VERSION_MICRO)
-}
-
-func RegisterAll() {
-	C.avcodec_register_all()
 }
 
 type PacketSideData struct {

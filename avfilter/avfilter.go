@@ -80,16 +80,8 @@ const (
 	GraphAutoConvertFlagNone GraphAutoConvertFlags = C.GO_AVFILTER_AUTO_CONVERT_NONE
 )
 
-func init() {
-	RegisterAll()
-}
-
 func Version() (int, int, int) {
 	return int(C.GO_AVFILTER_VERSION_MAJOR), int(C.GO_AVFILTER_VERSION_MINOR), int(C.GO_AVFILTER_VERSION_MICRO)
-}
-
-func RegisterAll() {
-	C.avfilter_register_all()
 }
 
 type Filter struct {
@@ -131,12 +123,13 @@ func (f *Filter) Flags() Flags {
 
 func Filters() []*Filter {
 	var filters []*Filter
-	var cPrev *C.AVFilter
+	var opaque unsafe.Pointer
 	for {
-		if cPrev = C.avfilter_next(cPrev); cPrev == nil {
+		cFilt := C.av_filter_iterate(&opaque)
+		if cFilt == nil {
 			break
 		}
-		filters = append(filters, NewFilterFromC(unsafe.Pointer(cPrev)))
+		filters = append(filters, NewFilterFromC(unsafe.Pointer(cFilt)))
 	}
 	return filters
 }
@@ -240,7 +233,7 @@ func (l *Link) MaxSamples() int {
 }
 
 func (l *Link) Channels() int {
-	return int(C.avfilter_link_get_channels(l.CAVFilterLink))
+	return int(l.CAVFilterLink.channels)
 }
 
 type Context struct {

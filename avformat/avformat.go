@@ -28,7 +28,11 @@ package avformat
 //  arr[n] = val;
 //}
 //
-// size_t sizeOfAVFormatContextFilename = sizeof(((AVFormatContext *)NULL)->filename);
+// static void go_av_format_context_set_url(AVFormatContext *ctx, const char *s)
+// {
+//   av_freep(&ctx->url);
+//   ctx->url = av_strdup(s);
+// }
 //
 // int GO_AVFORMAT_VERSION_MAJOR = LIBAVFORMAT_VERSION_MAJOR;
 // int GO_AVFORMAT_VERSION_MINOR = LIBAVFORMAT_VERSION_MINOR;
@@ -181,16 +185,8 @@ const (
 	SeekFlagFrame    SeekFlags = C.AVSEEK_FLAG_FRAME
 )
 
-func init() {
-	RegisterAll()
-}
-
 func Version() (int, int, int) {
 	return int(C.GO_AVFORMAT_VERSION_MAJOR), int(C.GO_AVFORMAT_VERSION_MINOR), int(C.GO_AVFORMAT_VERSION_MICRO)
-}
-
-func RegisterAll() {
-	C.av_register_all()
 }
 
 func NetworkInit() {
@@ -563,7 +559,7 @@ func (s *Stream) SetAverageFrameRate(frameRate *avutil.Rational) {
 }
 
 func (s *Stream) RealFrameRate() *avutil.Rational {
-	r := C.av_stream_get_r_frame_rate(s.CAVStream)
+	r := s.CAVStream.r_frame_rate
 	return avutil.NewRationalFromC(unsafe.Pointer(&r))
 }
 
@@ -792,13 +788,16 @@ func (ctx *Context) Streams() []*Stream {
 }
 
 func (ctx *Context) FileName() string {
-	return C.GoString(&ctx.CAVFormatContext.filename[0])
+	if ctx.CAVFormatContext.url == nil {
+		return ""
+	}
+	return C.GoString(ctx.CAVFormatContext.url)
 }
 
 func (ctx *Context) SetFileName(fileName string) {
 	cFileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cFileName))
-	C.av_strlcpy(&ctx.CAVFormatContext.filename[0], cFileName, C.sizeOfAVFormatContextFilename)
+	C.go_av_format_context_set_url(ctx.CAVFormatContext, cFileName)
 }
 
 func (ctx *Context) StartTime() int64 {

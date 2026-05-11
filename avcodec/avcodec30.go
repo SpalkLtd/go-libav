@@ -1,3 +1,4 @@
+//go:build ffmpeg30
 // +build ffmpeg30
 
 package avcodec
@@ -132,21 +133,20 @@ func (ctx *BitStreamFilterContext) ArgsOK() (string, bool) {
 	return cStringToStringOk(ctx.CAVBitStreamFilterContext.args)
 }
 
-func (ctx *BitStreamFilterContext) SetArgs(args *string) error {
+func (ctx *BitStreamFilterContext) SetArgs(args *string) {
 	C.av_freep(unsafe.Pointer(&ctx.CAVBitStreamFilterContext.args))
 	if args == nil {
-		return nil
+		return
 	}
 	bArgs := []byte(*args)
 	length := len(bArgs)
 	cArgs := (*C.char)(C.av_malloc(C.size_t(length + 1)))
 	if cArgs == nil {
-		return ErrAllocationError
+		panic("av_malloc: out of memory")
 	}
 	if length > 0 {
 		C.memcpy(unsafe.Pointer(cArgs), unsafe.Pointer(&bArgs[0]), C.size_t(length))
 	}
 	C.memset(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs))+uintptr(length)), 0, 1)
 	ctx.CAVBitStreamFilterContext.args = cArgs
-	return nil
 }

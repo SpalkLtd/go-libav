@@ -141,10 +141,7 @@ func testGraphAddFilter(t *testing.T, graph *Graph, name, id string) *Context {
 }
 
 func testNewGraph(t *testing.T) *Graph {
-	graph, err := NewGraph()
-	if err != nil {
-		t.Fatal(err)
-	}
+	graph := NewGraph()
 	if graph == nil {
 		t.Fatalf("Expecting filter graph")
 	}
@@ -154,10 +151,7 @@ func testNewGraph(t *testing.T) *Graph {
 func TestInOutNewFreeLeak10M(t *testing.T) {
 	before := testMemoryUsed(t)
 	for i := 0; i < 10000000; i++ {
-		io, err := NewInOut()
-		if err != nil {
-			t.Fatal(err)
-		}
+		io := NewInOut()
 		io.Free()
 	}
 	testMemoryLeak(t, before, 50*1024*1024)

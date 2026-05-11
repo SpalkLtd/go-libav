@@ -23,3 +23,4 @@
 - Add GetFrameFlags to avfilter
 - Fix interrupt callback: set opaque pointer before avformat_open_input so URLContext copy inherits it
 - Replace deprecated FFmpeg 4.3 APIs and remove the now-empty avcodec/avformat/avfilter RegisterAll wrappers
+- Panic on libav allocation failures

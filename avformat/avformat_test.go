@@ -62,7 +62,7 @@ func TestFindInputByShortName(t *testing.T) {
 }
 
 func TestInputFlags(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	fixture := fixturePath("sample_mpeg4.mp4")
 	err := ctx.OpenInput(fixture, nil, nil)
@@ -85,9 +85,7 @@ func TestProbeDataSetBuffer(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := pd.SetBuffer(b); err != nil {
-			t.Fatal(err)
-		}
+		pd.SetBuffer(b)
 		if pd.CAVProbeData.buf == nil {
 			t.Fatalf("Expecting buf")
 		}
@@ -271,8 +269,8 @@ func TestGuessOutputFromMimeType(t *testing.T) {
 }
 
 func TestNewContextForInput(t *testing.T) {
-	ctx, err := NewContextForInput()
-	if err != nil || ctx == nil {
+	ctx := NewContextForInput()
+	if ctx == nil {
 		t.Fatalf("Expecting context")
 	}
 	defer ctx.Free()
@@ -291,7 +289,7 @@ func TestNewContextForOutput(t *testing.T) {
 }
 
 func TestContextOpenInputNonExistent(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	err := ctx.OpenInput("foobarnonexistent", nil, nil).(*avutil.Error)
 	if err == nil {
@@ -304,7 +302,7 @@ func TestContextOpenInputNonExistent(t *testing.T) {
 }
 
 func TestContextOpenInputExistent(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	fixture := fixturePath("sample_mpeg4.mp4")
 	err := ctx.OpenInput(fixture, nil, nil)
@@ -315,7 +313,7 @@ func TestContextOpenInputExistent(t *testing.T) {
 }
 
 func TestContextOpenInputWithOptions(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	fixture := fixturePath("sample_mpeg4.mp4")
 
@@ -352,7 +350,7 @@ func fixturePath(elem ...string) string {
 }
 
 func TestSetFileName(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 
 	var buff bytes.Buffer
@@ -373,7 +371,7 @@ func TestSetFileName(t *testing.T) {
 }
 
 func TestContextSeekToTimestamp(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	fixture := fixturePath("sample_mpeg4.mp4")
 	err := ctx.OpenInput(fixture, nil, nil)
@@ -387,7 +385,7 @@ func TestContextSeekToTimestamp(t *testing.T) {
 }
 
 func TestSampleAspectRatio(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	stream, err := ctx.NewStream()
 	if err != nil {
@@ -403,7 +401,7 @@ func TestSampleAspectRatio(t *testing.T) {
 }
 
 func TestRealFrameRate(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	stream, err := ctx.NewStream()
 	if err != nil {
@@ -419,7 +417,7 @@ func TestRealFrameRate(t *testing.T) {
 }
 
 func TestStreamFirstDTSOK(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	stream, err := ctx.NewStream()
 	if err != nil {
@@ -465,7 +463,7 @@ func TestStreamEndPTSOK(t *testing.T) {
 }
 
 func testOpenInput(t *testing.T) *Context {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	if err := ctx.OpenInput(fixturePath("sample_mpeg4.mp4"), nil, nil); err != nil {
 		t.Fatal(err)
 	}
@@ -505,10 +503,7 @@ func testWritePacket(t *testing.T, iCtx *Context, oCtx *Context) *avcodec.Packet
 }
 
 func testNewPacket(t *testing.T) *avcodec.Packet {
-	pkt, err := avcodec.NewPacket()
-	if err != nil {
-		t.Fatal(err)
-	}
+	pkt := avcodec.NewPacket()
 	if pkt == nil {
 		t.Fatalf("Expecting packet")
 	}
@@ -516,7 +511,7 @@ func testNewPacket(t *testing.T) *avcodec.Packet {
 }
 
 func TestGuessFrameRate(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 
 	fixture := fixturePath("sample_mpeg4.mp4")
@@ -544,7 +539,7 @@ func TestGuessFrameRate(t *testing.T) {
 }
 
 func TestContextDuration(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 
 	ctx.SetDuration(1000000)
@@ -555,7 +550,7 @@ func TestContextDuration(t *testing.T) {
 }
 
 func TestContextMaxDelay(t *testing.T) {
-	ctx, _ := NewContextForInput()
+	ctx := NewContextForInput()
 	defer ctx.Free()
 
 	ctx.SetMaxDelay(500000)
@@ -566,10 +561,7 @@ func TestContextMaxDelay(t *testing.T) {
 }
 
 func TestContextMetaData(t *testing.T) {
-	fmtCtx, err := NewContextForInput()
-	if err != nil {
-		t.Fatal(err)
-	}
+	fmtCtx := NewContextForInput()
 	defer fmtCtx.Free()
 	metadata := fmtCtx.MetaData()
 	if count := metadata.Count(); count != 0 {
@@ -608,10 +600,7 @@ func TestContextMetaData(t *testing.T) {
 }
 
 func TestContextSetMetaData(t *testing.T) {
-	fmtCtx, err := NewContextForInput()
-	if err != nil {
-		t.Fatal(err)
-	}
+	fmtCtx := NewContextForInput()
 	defer fmtCtx.Free()
 	if count := fmtCtx.MetaData().Count(); count != 0 {
 		t.Fatalf("Expecting count but got %d", count)
@@ -627,10 +616,7 @@ func TestContextSetMetaData(t *testing.T) {
 }
 
 func TestContext_IOOpenCallback(t *testing.T) {
-	ctx, err := NewContextForInput()
-	if err != nil {
-		t.Fatal(err)
-	}
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	cb := ctx.IOOpenCallback()
 	if cb == nil {
@@ -652,10 +638,7 @@ func TestContext_IOOpenCallback(t *testing.T) {
 }
 
 func TestContext_IOCloseCallback(t *testing.T) {
-	ctx, err := NewContextForInput()
-	if err != nil {
-		t.Fatal(err)
-	}
+	ctx := NewContextForInput()
 	defer ctx.Free()
 	cb := ctx.IOCloseCallback()
 	if cb == nil {
@@ -679,10 +662,7 @@ func TestContext_IOCloseCallback(t *testing.T) {
 func TestContextNewFreeLeak1M(t *testing.T) {
 	before := testMemoryUsed(t)
 	for i := 0; i < 1000000; i++ {
-		ctx, err := NewContextForInput()
-		if err != nil {
-			t.Fatal(err)
-		}
+		ctx := NewContextForInput()
 		ctx.Free()
 	}
 	testMemoryLeak(t, before, 50*1024*1024)
@@ -786,10 +766,7 @@ func ExampleShowMediaInfo() {
 	inputFileName := fixturePath("sample_iPod.m4v")
 
 	// open format (container) context
-	decFmt, err := NewContextForInput()
-	if err != nil {
-		log.Fatalf("Failed to open input context: %v. Run 'make fixture' to fetch the required files", err)
-	}
+	decFmt := NewContextForInput()
 
 	// set some options for opening file
 	options := avutil.NewDictionary()

@@ -283,27 +283,26 @@ func (pd *ProbeData) Free() {
 	pd.CAVProbeData.mime_type = nil
 }
 
-func (pd *ProbeData) SetFileName(fileName *string) error {
+func (pd *ProbeData) SetFileName(fileName *string) {
 	C.free(unsafe.Pointer(pd.CAVProbeData.filename))
 	if fileName == nil {
 		pd.CAVProbeData.filename = nil
-		return nil
+		return
 	}
 	pd.CAVProbeData.filename = C.CString(*fileName)
 	if pd.CAVProbeData.filename == nil {
-		return ErrAllocationError
+		panic("CString: out of memory")
 	}
-	return nil
 }
 
-func (pd *ProbeData) SetBuffer(buffer []byte) error {
+func (pd *ProbeData) SetBuffer(buffer []byte) {
 	pd.CAVProbeData.buf_size = 0
 	C.av_freep(unsafe.Pointer(&pd.CAVProbeData.buf))
 	size := C.size_t(len(buffer))
 	extraSize := C.size_t(C.AVPROBE_PADDING_SIZE)
 	buf := C.av_malloc(size + extraSize)
 	if buf == nil {
-		return ErrAllocationError
+		panic("av_malloc: out of memory")
 	}
 	if size != 0 {
 		C.memcpy(buf, unsafe.Pointer(&buffer[0]), size)
@@ -311,20 +310,18 @@ func (pd *ProbeData) SetBuffer(buffer []byte) error {
 	C.memset(unsafe.Pointer(uintptr(buf)+uintptr(size)), 0, extraSize)
 	pd.CAVProbeData.buf = (*C.uchar)(buf)
 	pd.CAVProbeData.buf_size = C.int(size)
-	return nil
 }
 
-func (pd *ProbeData) SetMimeType(mimeType *string) error {
+func (pd *ProbeData) SetMimeType(mimeType *string) {
 	C.free(unsafe.Pointer(pd.CAVProbeData.mime_type))
 	if mimeType == nil {
 		pd.CAVProbeData.mime_type = nil
-		return nil
+		return
 	}
 	pd.CAVProbeData.mime_type = C.CString(*mimeType)
 	if pd.CAVProbeData.mime_type == nil {
-		return ErrAllocationError
+		panic("CString: out of memory")
 	}
-	return nil
 }
 
 func ProbeInput(pd *ProbeData, isOpened bool) *Input {
@@ -585,12 +582,12 @@ type Context struct {
 	interruptPtr     *C.int
 }
 
-func NewContextForInput() (*Context, error) {
+func NewContextForInput() *Context {
 	cCtx := C.avformat_alloc_context()
 	if cCtx == nil {
-		return nil, ErrAllocationError
+		panic("avformat_alloc_context: out of memory")
 	}
-	return NewContextFromC(unsafe.Pointer(cCtx)), nil
+	return NewContextFromC(unsafe.Pointer(cCtx))
 }
 
 func NewContextForOutput(output *Output) (*Context, error) {
@@ -702,10 +699,7 @@ func (ctx *Context) WriteTrailer() error {
 }
 
 func (ctx *Context) ReadFrame() (*avcodec.Packet, error) {
-	pkt, err := avcodec.NewPacket()
-	if err != nil {
-		return nil, err
-	}
+	pkt := avcodec.NewPacket()
 	cPkt := (*C.AVPacket)(unsafe.Pointer(pkt.CAVPacket))
 	code := C.av_read_frame(ctx.CAVFormatContext, cPkt)
 	if code < 0 {

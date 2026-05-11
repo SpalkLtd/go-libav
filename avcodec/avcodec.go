@@ -280,19 +280,16 @@ type Packet struct {
 	CAVPacket *C.AVPacket
 }
 
-func NewPacket() (*Packet, error) {
+func NewPacket() *Packet {
 	cPkt := (*C.AVPacket)(C.av_packet_alloc())
 	if cPkt == nil {
-		return nil, ErrAllocationError
+		panic("av_packet_alloc: out of memory")
 	}
-	return NewPacketFromC(unsafe.Pointer(cPkt)), nil
+	return NewPacketFromC(unsafe.Pointer(cPkt))
 }
 
 func (pkt *Packet) Copy() (*Packet, error) {
-	newpacket, err := NewPacket()
-	if err != nil {
-		return newpacket, err
-	}
+	newpacket := NewPacket()
 	C.av_init_packet(newpacket.CAVPacket)
 	code := C.av_packet_ref(newpacket.CAVPacket, pkt.CAVPacket)
 	if code < 0 {
@@ -672,16 +669,16 @@ type Context struct {
 	*avutil.OptionAccessor
 }
 
-func NewContextWithCodec(codec *Codec) (*Context, error) {
+func NewContextWithCodec(codec *Codec) *Context {
 	var cCodec *C.AVCodec
 	if codec != nil {
 		cCodec = codec.CAVCodec
 	}
 	cCtx := C.avcodec_alloc_context3(cCodec)
 	if cCtx == nil {
-		return nil, ErrAllocationError
+		panic("avcodec_alloc_context3: out of memory")
 	}
-	return NewContextFromC(unsafe.Pointer(cCtx)), nil
+	return NewContextFromC(unsafe.Pointer(cCtx))
 }
 
 func NewContextFromC(cCtx unsafe.Pointer) *Context {
@@ -1842,22 +1839,19 @@ func (ctx *Context) StatsIn() []byte {
 	return (*[1 << 30]byte)(unsafe.Pointer(ctx.CAVCodecContext.stats_in))[:length:length]
 }
 
-func (ctx *Context) SetStatsIn(in []byte) error {
+func (ctx *Context) SetStatsIn(in []byte) {
 	C.av_freep(unsafe.Pointer(&ctx.CAVCodecContext.stats_in))
 	if len(in) == 0 {
-		return nil
+		return
 	}
 	length := len(in)
 	cIn := (*C.char)(C.av_malloc(C.size_t(length + 1)))
 	if cIn == nil {
-		return ErrAllocationError
+		panic("av_malloc: out of memory")
 	}
-	if len(in) > 0 {
-		C.memcpy(unsafe.Pointer(cIn), unsafe.Pointer(&in[0]), C.size_t(length))
-	}
+	C.memcpy(unsafe.Pointer(cIn), unsafe.Pointer(&in[0]), C.size_t(length))
 	C.memset(unsafe.Pointer(uintptr(unsafe.Pointer(cIn))+uintptr(length)), 0, 1)
 	ctx.CAVCodecContext.stats_in = cIn
-	return nil
 }
 
 func (ctx *Context) StatsOut() []byte {
@@ -1868,22 +1862,19 @@ func (ctx *Context) StatsOut() []byte {
 	return (*[1 << 30]byte)(unsafe.Pointer(ctx.CAVCodecContext.stats_out))[:length:length]
 }
 
-func (ctx *Context) SetStatsOut(out []byte) error {
+func (ctx *Context) SetStatsOut(out []byte) {
 	C.av_freep(unsafe.Pointer(&ctx.CAVCodecContext.stats_out))
 	if len(out) == 0 {
-		return nil
+		return
 	}
 	length := len(out)
 	cOut := (*C.char)(C.av_malloc(C.size_t(length + 1)))
 	if cOut == nil {
-		return ErrAllocationError
+		panic("av_malloc: out of memory")
 	}
-	if len(out) > 0 {
-		C.memcpy(unsafe.Pointer(cOut), unsafe.Pointer(&out[0]), C.size_t(length))
-	}
+	C.memcpy(unsafe.Pointer(cOut), unsafe.Pointer(&out[0]), C.size_t(length))
 	C.memset(unsafe.Pointer(uintptr(unsafe.Pointer(cOut))+uintptr(length)), 0, 1)
 	ctx.CAVCodecContext.stats_out = cOut
-	return nil
 }
 
 func cStringToStringOk(cStr *C.char) (string, bool) {

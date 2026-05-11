@@ -553,10 +553,7 @@ func TestFindPixelFormatByName(t *testing.T) {
 }
 
 func TestNewFrame(t *testing.T) {
-	frame, err := NewFrame()
-	if err != nil {
-		t.Fatal(err)
-	}
+	frame := NewFrame()
 	if frame == nil {
 		t.Fatalf("Expecting frame")
 	}
@@ -564,7 +561,7 @@ func TestNewFrame(t *testing.T) {
 }
 
 func TestFramePacketDurationOK(t *testing.T) {
-	frame, _ := NewFrame()
+	frame := NewFrame()
 	defer frame.Free()
 	result := frame.PacketDuration()
 	if result != 0 {
@@ -573,7 +570,7 @@ func TestFramePacketDurationOK(t *testing.T) {
 }
 
 func TestFrameGetBuffer(t *testing.T) {
-	frame, _ := NewFrame()
+	frame := NewFrame()
 	defer frame.Free()
 	if frame.Data(0) != nil {
 		t.Fatalf("Expecting no data")
@@ -593,16 +590,13 @@ func TestFrameGetBuffer(t *testing.T) {
 
 func TestFrameNewFreeLeak10M(t *testing.T) {
 	for i := 0; i < 10000000; i++ {
-		frame, err := NewFrame()
-		if err != nil {
-			t.Fatal(err)
-		}
+		frame := NewFrame()
 		frame.Free()
 	}
 }
 
 func TestFrameMetadata(t *testing.T) {
-	frame, _ := NewFrame()
+	frame := NewFrame()
 	defer frame.Free()
 
 	result := frame.Metadata()

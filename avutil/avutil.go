@@ -761,12 +761,12 @@ type Frame struct {
 	CAVFrame *C.AVFrame
 }
 
-func NewFrame() (*Frame, error) {
+func NewFrame() *Frame {
 	cFrame := C.av_frame_alloc()
 	if cFrame == nil {
-		return nil, ErrAllocationError
+		panic("av_frame_alloc: out of memory")
 	}
-	return NewFrameFromC(unsafe.Pointer(cFrame)), nil
+	return NewFrameFromC(unsafe.Pointer(cFrame))
 }
 
 func NewFrameFromC(cFrame unsafe.Pointer) *Frame {
@@ -1543,7 +1543,7 @@ func NewAudioFifo(sf SampleFormat, layout ChannelLayout, nb_samples int) (*Audio
 	cSampleFormat := C.av_get_sample_fmt(cName)
 	cAudioFifo := C.av_audio_fifo_alloc(cSampleFormat, C.int(layout.NumberOfChannels()), C.int(nb_samples))
 	if cAudioFifo == nil {
-		return nil, ErrAllocationError
+		panic("av_audio_fifo_alloc: out of memory")
 	}
 	fifo := NewAudioFifoFromC(unsafe.Pointer(cAudioFifo))
 	fifo.SampleFmt = sf

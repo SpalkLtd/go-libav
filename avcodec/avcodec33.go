@@ -26,12 +26,12 @@ type CodecParameters struct {
 	CAVCodecParameters *C.AVCodecParameters
 }
 
-func NewCodecParameters() (*CodecParameters, error) {
+func NewCodecParameters() *CodecParameters {
 	cPkt := (*C.AVCodecParameters)(C.avcodec_parameters_alloc())
 	if cPkt == nil {
-		return nil, ErrAllocationError
+		panic("avcodec_parameters_alloc: out of memory")
 	}
-	return NewCodecParametersFromC(unsafe.Pointer(cPkt)), nil
+	return NewCodecParametersFromC(unsafe.Pointer(cPkt))
 }
 
 func NewCodecParametersFromC(cPSD unsafe.Pointer) *CodecParameters {
@@ -44,10 +44,7 @@ func (cParams *CodecParameters) Free() {
 
 func (ctx *Context) CopyTo(dst *Context) error {
 	// added in lavc 57.33.100
-	parameters, err := NewCodecParameters()
-	if err != nil {
-		return err
-	}
+	parameters := NewCodecParameters()
 	defer parameters.Free()
 	cParams := (*C.AVCodecParameters)(unsafe.Pointer(parameters.CAVCodecParameters))
 	code := C.avcodec_parameters_from_context(cParams, ctx.CAVCodecContext)

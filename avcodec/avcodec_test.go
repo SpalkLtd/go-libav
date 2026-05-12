@@ -31,10 +31,7 @@ func TestVersion(t *testing.T) {
 }
 
 func TestNewPacket(t *testing.T) {
-	pkt, err := NewPacket()
-	if err != nil {
-		t.Fatal(err)
-	}
+	pkt := NewPacket()
 	defer pkt.Free()
 	if pkt == nil {
 		t.Fatalf("Expecting packet")
@@ -42,7 +39,7 @@ func TestNewPacket(t *testing.T) {
 }
 
 func TestPacketFree(t *testing.T) {
-	pkt, _ := NewPacket()
+	pkt := NewPacket()
 	if pkt.CAVPacket == nil {
 		t.Fatalf("Expecting packet")
 	}
@@ -55,7 +52,7 @@ func TestPacketFree(t *testing.T) {
 }
 
 func TestPacketDuration(t *testing.T) {
-	pkt, _ := NewPacket()
+	pkt := NewPacket()
 	defer pkt.Free()
 	data := int64(100000)
 	pkt.SetDuration(data)
@@ -67,10 +64,7 @@ func TestPacketDuration(t *testing.T) {
 func TestPacketNewFreeLeak10M(t *testing.T) {
 	before := testMemoryUsed(t)
 	for i := 0; i < 10000000; i++ {
-		pkt, err := NewPacket()
-		if err != nil {
-			t.Fatal(err)
-		}
+		pkt := NewPacket()
 		pkt.Free()
 	}
 	testMemoryLeak(t, before, 50*1024*1024)
@@ -205,55 +199,40 @@ func TestContextStatInOutOK(t *testing.T) {
 	if codec == nil {
 		t.Error("error")
 	}
-	ctx, err := NewContextWithCodec(codec)
-	if err != nil {
-		t.Error("error")
-	}
+	ctx = NewContextWithCodec(codec)
 	defer ctx.Free()
 
 	expected := []byte("stats_in")
-	if err := ctx.SetStatsIn(expected); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsIn(expected)
 	result := ctx.StatsIn()
 	if !bytes.Equal(result, expected) {
 		t.Fatalf("[TestContextStatInOutOK] result=%s NG, expected=%s", result, expected)
 	}
 	expected = []byte{}
-	if err := ctx.SetStatsIn(expected); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsIn(expected)
 	result = ctx.StatsIn()
 	if !bytes.Equal(result, expected) {
 		t.Fatalf("[TestContextStatInOutOK] result=%v NG, expected=%v", result, expected)
 	}
-	if err := ctx.SetStatsIn(nil); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsIn(nil)
 	result = ctx.StatsIn()
 	if result != nil {
 		t.Fatalf("[TestContextStatInOutOK] result=%v NG, expected=nil", result)
 	}
 
 	expected = []byte("stats_out")
-	if err := ctx.SetStatsOut(expected); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsOut(expected)
 	result = ctx.StatsOut()
 	if !bytes.Equal(result, expected) {
 		t.Fatalf("[TestContextStatInOutOK] result=%s NG, expected=%s", result, expected)
 	}
 	expected = []byte{}
-	if err := ctx.SetStatsOut(expected); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsOut(expected)
 	result = ctx.StatsOut()
 	if !bytes.Equal(result, expected) {
 		t.Fatalf("[TestContextStatInOutOK] result=%v NG, expected=%v", result, expected)
 	}
-	if err := ctx.SetStatsOut(nil); err != nil {
-		t.Fatalf("[TestContextStatInOutOK] err=%v NG, expected is not error", err)
-	}
+	ctx.SetStatsOut(nil)
 	result = ctx.StatsOut()
 	if result != nil {
 		t.Fatalf("[TestContextStatInOutOK] result=%v NG, expected=nil", result)
@@ -369,10 +348,7 @@ func testNewContextWithCodec(t *testing.T, name string) *Context {
 	if codec == nil {
 		t.Fatalf("Expecting codec")
 	}
-	ctx, err := NewContextWithCodec(codec)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ctx := NewContextWithCodec(codec)
 	if ctx == nil {
 		t.Fatalf("Expecting context")
 	}
@@ -380,10 +356,7 @@ func testNewContextWithCodec(t *testing.T, name string) *Context {
 }
 
 func TestNewContextWithCodecNil(t *testing.T) {
-	ctx, err := NewContextWithCodec(nil)
-	if err != nil {
-		t.Fatalf("Expecting allocate")
-	}
+	ctx := NewContextWithCodec(nil)
 	if ctx == nil {
 		t.Fatalf("Expecting context")
 	}
@@ -449,12 +422,11 @@ func findPixelFormatByName(name string, t *testing.T) avutil.PixelFormat {
 }
 
 func BenchmarkAVPacketGetData(b *testing.B) {
-	pkt, err := NewPacket()
+	pkt := NewPacket()
 	randBytes := make([]byte, 188)
-	_, err = rand.Read(randBytes)
+	_, err := rand.Read(randBytes)
 	require.NoError(b, err)
 	pkt.SetBytes(randBytes)
-	require.NoError(b, err)
 	for i := 0; i < b.N; i++ {
 		//Op
 		pkt.GetData()
@@ -463,12 +435,11 @@ func BenchmarkAVPacketGetData(b *testing.B) {
 }
 
 func BenchmarkAVPacketGetDataAt(b *testing.B) {
-	pkt, err := NewPacket()
+	pkt := NewPacket()
 	randBytes := make([]byte, 188)
-	_, err = rand.Read(randBytes)
+	_, err := rand.Read(randBytes)
 	require.NoError(b, err)
 	pkt.SetBytes(randBytes)
-	require.NoError(b, err)
 	for i := 0; i < b.N; i++ {
 		//Op
 		pkt.GetDataAt(1)

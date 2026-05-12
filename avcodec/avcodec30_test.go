@@ -1,3 +1,4 @@
+//go:build ffmpeg30
 // +build ffmpeg30
 
 package avcodec
@@ -67,9 +68,7 @@ func TestBitStreamFilterContext_Args(t *testing.T) {
 	}
 
 	input := avutil.String("argstest")
-	if err := ctx.SetArgs(input); err != nil {
-		t.Fatalf("[TestBitStreamFilterContext_Args] err=%v, NG expected not error", err)
-	}
+	ctx.SetArgs(input)
 	_, ok = ctx.ArgsOK()
 	if !ok {
 		t.Fatalf("[TestBitStreamFilterContext_Args] ok=%t, NG expected=%t", ok, true)
@@ -79,9 +78,7 @@ func TestBitStreamFilterContext_Args(t *testing.T) {
 		t.Fatalf("[TestBitStreamFilterContext_Args] result=%s, NG expected=%s", result, *input)
 	}
 
-	if err := ctx.SetArgs(nil); err != nil {
-		t.Fatalf("[TestBitStreamFilterContext_Args] err=%v, NG expected not error", err)
-	}
+	ctx.SetArgs(nil)
 	_, ok = ctx.ArgsOK()
 	if ok {
 		t.Fatalf("[TestBitStreamFilterContext_Args] ok=%t, NG expected=%t", ok, false)

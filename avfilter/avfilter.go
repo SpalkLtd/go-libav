@@ -446,12 +446,12 @@ type Graph struct {
 	CAVFilterGraph *C.AVFilterGraph
 }
 
-func NewGraph() (*Graph, error) {
+func NewGraph() *Graph {
 	cGraph := C.avfilter_graph_alloc()
 	if cGraph == nil {
-		return nil, ErrAllocationError
+		panic("avfilter_graph_alloc: out of memory")
 	}
-	return NewGraphFromC(unsafe.Pointer(cGraph)), nil
+	return NewGraphFromC(unsafe.Pointer(cGraph))
 }
 
 func NewGraphFromC(cGraph unsafe.Pointer) *Graph {
@@ -513,24 +513,24 @@ func (g *Graph) RequestOldest() error {
 	return nil
 }
 
-func (g *Graph) Dump() (string, error) {
+func (g *Graph) Dump() string {
 	cStr := C.avfilter_graph_dump(g.CAVFilterGraph, nil)
 	if cStr == nil {
-		return "", ErrAllocationError
+		panic("avfilter_graph_dump: out of memory")
 	}
 	defer C.av_free(unsafe.Pointer(cStr))
-	return C.GoString(cStr), nil
+	return C.GoString(cStr)
 }
 
-func (g *Graph) DumpWithOptions(options string) (string, error) {
+func (g *Graph) DumpWithOptions(options string) string {
 	cOptions := C.CString(options)
 	defer C.free(unsafe.Pointer(cOptions))
 	cStr := C.avfilter_graph_dump(g.CAVFilterGraph, cOptions)
 	if cStr == nil {
-		return "", ErrAllocationError
+		panic("avfilter_graph_dump: out of memory")
 	}
 	defer C.av_free(unsafe.Pointer(cStr))
-	return C.GoString(cStr), nil
+	return C.GoString(cStr)
 }
 
 func (g *Graph) AutoConvertFlags() GraphAutoConvertFlags {
@@ -545,12 +545,12 @@ type InOut struct {
 	CAVFilterInOut *C.AVFilterInOut
 }
 
-func NewInOut() (*InOut, error) {
+func NewInOut() *InOut {
 	cInOut := C.avfilter_inout_alloc()
 	if cInOut == nil {
-		return nil, ErrAllocationError
+		panic("avfilter_inout_alloc: out of memory")
 	}
-	return NewInOutFromC(unsafe.Pointer(cInOut)), nil
+	return NewInOutFromC(unsafe.Pointer(cInOut))
 }
 
 func NewInOutFromC(cInOut unsafe.Pointer) *InOut {
@@ -572,13 +572,12 @@ func (io *InOut) NameOk() (string, bool) {
 	return cStringToStringOk(io.CAVFilterInOut.name)
 }
 
-func (io *InOut) SetName(name string) error {
+func (io *InOut) SetName(name string) {
 	C.free(unsafe.Pointer(io.CAVFilterInOut.name))
 	io.CAVFilterInOut.name = C.CString(name)
 	if io.CAVFilterInOut.name == nil {
-		return ErrAllocationError
+		panic("CString: out of memory")
 	}
-	return nil
 }
 
 func (io *InOut) PadIndex() int {

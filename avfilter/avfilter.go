@@ -264,10 +264,17 @@ func (ctx *Context) InitWithString(args string) error {
 	return nil
 }
 
-func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
+// InitWithDictionary accepts an avutil.IDictionary so tests can substitute
+// fakes. The production *avutil.Dictionary satisfies the interface; any other
+// implementation yields an error.
+func (ctx *Context) InitWithDictionary(options avutil.IDictionary) error {
 	var cOptions **C.AVDictionary
 	if options != nil {
-		cOptions = (**C.AVDictionary)(options.Pointer())
+		concrete, ok := options.(*avutil.Dictionary)
+		if !ok {
+			return errors.New("avfilter.Context.InitWithDictionary: opts must be *avutil.Dictionary")
+		}
+		cOptions = (**C.AVDictionary)(concrete.Pointer())
 	}
 	code := C.avfilter_init_dict(ctx.CAVFilterContext, cOptions)
 	if code < 0 {
@@ -276,10 +283,14 @@ func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
 	return nil
 }
 
-func (ctx *Context) Link(srcPad uint, dst *Context, dstPad uint) error {
-	cSrc := ctx.CAVFilterContext
-	cDst := dst.CAVFilterContext
-	code := C.avfilter_link(cSrc, C.uint(srcPad), cDst, C.uint(dstPad))
+// Link accepts an IContext so tests can substitute fakes. The production
+// *Context satisfies the interface; any other implementation yields an error.
+func (ctx *Context) Link(srcPad uint, dst IContext, dstPad uint) error {
+	target, ok := dst.(*Context)
+	if !ok {
+		return errors.New("avfilter.Context.Link: dst must be *avfilter.Context")
+	}
+	code := C.avfilter_link(ctx.CAVFilterContext, C.uint(srcPad), target.CAVFilterContext, C.uint(dstPad))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -475,8 +486,15 @@ func (g *Graph) NumberOfFilters() uint {
 	return uint(g.CAVFilterGraph.nb_filters)
 }
 
-func (g *Graph) AddFilter(filter *Filter, name string) (*Context, error) {
-	cName := C.CString(name)
+// AddFilter looks up the named filter type and allocates an instance with the
+// given id inside the graph. Bundles FindFilterByName + the underlying C call
+// so callers don't need to thread *Filter through their code.
+func (g *Graph) AddFilter(name, id string) (IContext, error) {
+	filter, err := FindFilterByName(name)
+	if err != nil {
+		return nil, err
+	}
+	cName := C.CString(id)
 	defer C.free(unsafe.Pointer(cName))
 	cCtx := C.avfilter_graph_alloc_filter(g.CAVFilterGraph, filter.CAVFilter, cName)
 	if cCtx == nil {

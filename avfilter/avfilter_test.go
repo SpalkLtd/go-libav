@@ -117,16 +117,13 @@ func testFilterByName(t *testing.T, name string) *Filter {
 }
 
 func testGraphAddFilter(t *testing.T, graph *Graph, name, id string) *Context {
-	ictx, err := graph.AddFilter(name, id)
+	filter := testFilterByName(t, name)
+	ctx, err := graph.AddFilter(filter, id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ictx == nil {
+	if ctx == nil {
 		t.Fatalf("Expecting filter context")
-	}
-	ctx, ok := ictx.(*Context)
-	if !ok {
-		t.Fatalf("Expecting *Context, got %T", ictx)
 	}
 	if !strings.EqualFold(id, ctx.Name()) {
 		t.Fatalf("[testAddFilter] context name expected: %s, got: %s", id, ctx.Name())

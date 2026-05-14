@@ -27,7 +27,7 @@ type IContext interface {
 // IGraph is the interface a filter graph exposes for filter creation and
 // lifecycle. *Graph implements it directly.
 type IGraph interface {
-	AddFilter(name, id string) (IContext, error)
+	AddFilterByName(name, id string) (IContext, error)
 	Config() error
 	RequestOldest() error
 	Free()

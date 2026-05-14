@@ -486,21 +486,26 @@ func (g *Graph) NumberOfFilters() uint {
 	return uint(g.CAVFilterGraph.nb_filters)
 }
 
-// AddFilter looks up the named filter type and allocates an instance with the
-// given id inside the graph. Bundles FindFilterByName + the underlying C call
-// so callers don't need to thread *Filter through their code.
-func (g *Graph) AddFilter(name, id string) (IContext, error) {
-	filter, err := FindFilterByName(name)
-	if err != nil {
-		return nil, err
-	}
-	cName := C.CString(id)
+func (g *Graph) AddFilter(filter *Filter, name string) (*Context, error) {
+	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 	cCtx := C.avfilter_graph_alloc_filter(g.CAVFilterGraph, filter.CAVFilter, cName)
 	if cCtx == nil {
 		return nil, ErrAllocationError
 	}
 	return NewContextFromC(unsafe.Pointer(cCtx)), nil
+}
+
+// AddFilterByName looks up the named filter type and allocates an instance
+// with the given id inside the graph. Equivalent to FindFilterByName followed
+// by AddFilter, exposed on IGraph so callers can drive graph construction
+// through a single interface method.
+func (g *Graph) AddFilterByName(name, id string) (IContext, error) {
+	filter, err := FindFilterByName(name)
+	if err != nil {
+		return nil, err
+	}
+	return g.AddFilter(filter, id)
 }
 
 func (g *Graph) Parse(filters string, input, output *InOut) error {

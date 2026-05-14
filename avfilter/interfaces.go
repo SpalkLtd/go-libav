@@ -9,6 +9,7 @@ import (
 // IContext is the interface a filter context exposes for setup, linking, and
 // frame in/out. *Context implements it directly. Tests may substitute fakes.
 type IContext interface {
+	Name() string
 	Init() error
 	InitWithDictionary(opts avutil.IDictionary) error
 	Link(srcPad uint, dst IContext, dstPad uint) error
@@ -20,6 +21,7 @@ type IContext interface {
 	SetInt64OptionC(name unsafe.Pointer, val int64) error
 	AddFrameWithFlags(frame *avutil.Frame, flags BufferSrcFlags) error
 	GetFrameWithFlags(frame *avutil.Frame, flags BufferSinkFlags) error
+	GetFrame(frame *avutil.Frame) error
 }
 
 // IGraph is the interface a filter graph exposes for filter creation and

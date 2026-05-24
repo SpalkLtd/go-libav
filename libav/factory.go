@@ -1,8 +1,3 @@
-// Package libav exposes a cross-cutting AVFactory interface that bundles the
-// libav constructors most users need: filter graphs and option dictionaries.
-//
-// The default factory wraps the real libav constructors. Tests substitute fakes
-// to drive error paths without calling into FFmpeg.
 package libav
 
 import (
@@ -10,16 +5,13 @@ import (
 	"github.com/SpalkLtd/go-libav/avutil"
 )
 
-// AVFactory creates the libav primitives used by code that builds filter graphs.
-type AVFactory interface {
-	NewGraph() avfilter.IGraph
-	NewDictionary() avutil.IDictionary
-}
+// DefaultFactory returns a value whose NewGraph and NewDictionary methods wrap
+// avfilter.NewGraph and avutil.NewDictionary. Consumers define their own
+// factory interface and accept this value through it.
+func DefaultFactory() Factory { return Factory{} }
 
-// DefaultFactory returns an AVFactory that wraps the real libav constructors.
-func DefaultFactory() AVFactory { return defaultFactory{} }
+// Factory is the concrete type returned by DefaultFactory.
+type Factory struct{}
 
-type defaultFactory struct{}
-
-func (defaultFactory) NewGraph() avfilter.IGraph        { return avfilter.NewGraph() }
-func (defaultFactory) NewDictionary() avutil.IDictionary { return avutil.NewDictionary() }
+func (Factory) NewGraph() avfilter.IGraph        { return avfilter.NewGraph() }
+func (Factory) NewDictionary() avutil.IDictionary { return avutil.NewDictionary() }

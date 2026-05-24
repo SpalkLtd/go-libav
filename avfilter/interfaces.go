@@ -6,8 +6,7 @@ import (
 	"github.com/SpalkLtd/go-libav/avutil"
 )
 
-// IContext is the interface a filter context exposes for setup, linking, and
-// frame in/out. *Context implements it directly. Tests may substitute fakes.
+// IContext is the interface implemented by *Context.
 type IContext interface {
 	Name() string
 	Init() error
@@ -24,8 +23,7 @@ type IContext interface {
 	GetFrame(frame *avutil.Frame) error
 }
 
-// IGraph is the interface a filter graph exposes for filter creation and
-// lifecycle. *Graph implements it directly.
+// IGraph is the interface implemented by *Graph.
 type IGraph interface {
 	AddFilterByName(name, id string) (IContext, error)
 	Config() error

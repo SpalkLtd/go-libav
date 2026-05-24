@@ -264,9 +264,6 @@ func (ctx *Context) InitWithString(args string) error {
 	return nil
 }
 
-// InitWithDictionary accepts an avutil.IDictionary so tests can substitute
-// fakes. The production *avutil.Dictionary satisfies the interface; any other
-// implementation yields an error.
 func (ctx *Context) InitWithDictionary(options avutil.IDictionary) error {
 	var cOptions **C.AVDictionary
 	if options != nil {
@@ -283,8 +280,6 @@ func (ctx *Context) InitWithDictionary(options avutil.IDictionary) error {
 	return nil
 }
 
-// Link accepts an IContext so tests can substitute fakes. The production
-// *Context satisfies the interface; any other implementation yields an error.
 func (ctx *Context) Link(srcPad uint, dst IContext, dstPad uint) error {
 	target, ok := dst.(*Context)
 	if !ok {
@@ -496,10 +491,6 @@ func (g *Graph) AddFilter(filter *Filter, name string) (*Context, error) {
 	return NewContextFromC(unsafe.Pointer(cCtx)), nil
 }
 
-// AddFilterByName looks up the named filter type and allocates an instance
-// with the given id inside the graph. Equivalent to FindFilterByName followed
-// by AddFilter, exposed on IGraph so callers can drive graph construction
-// through a single interface method.
 func (g *Graph) AddFilterByName(name, id string) (IContext, error) {
 	filter, err := FindFilterByName(name)
 	if err != nil {

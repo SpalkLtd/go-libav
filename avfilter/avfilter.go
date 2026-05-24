@@ -264,10 +264,14 @@ func (ctx *Context) InitWithString(args string) error {
 	return nil
 }
 
-func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
+func (ctx *Context) InitWithDictionary(options avutil.IDictionary) error {
 	var cOptions **C.AVDictionary
 	if options != nil {
-		cOptions = (**C.AVDictionary)(options.Pointer())
+		concrete, ok := options.(*avutil.Dictionary)
+		if !ok {
+			return errors.New("avfilter.Context.InitWithDictionary: opts must be *avutil.Dictionary")
+		}
+		cOptions = (**C.AVDictionary)(concrete.Pointer())
 	}
 	code := C.avfilter_init_dict(ctx.CAVFilterContext, cOptions)
 	if code < 0 {
@@ -276,10 +280,12 @@ func (ctx *Context) InitWithDictionary(options *avutil.Dictionary) error {
 	return nil
 }
 
-func (ctx *Context) Link(srcPad uint, dst *Context, dstPad uint) error {
-	cSrc := ctx.CAVFilterContext
-	cDst := dst.CAVFilterContext
-	code := C.avfilter_link(cSrc, C.uint(srcPad), cDst, C.uint(dstPad))
+func (ctx *Context) Link(srcPad uint, dst IContext, dstPad uint) error {
+	target, ok := dst.(*Context)
+	if !ok {
+		return errors.New("avfilter.Context.Link: dst must be *avfilter.Context")
+	}
+	code := C.avfilter_link(ctx.CAVFilterContext, C.uint(srcPad), target.CAVFilterContext, C.uint(dstPad))
 	if code < 0 {
 		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
 	}
@@ -483,6 +489,14 @@ func (g *Graph) AddFilter(filter *Filter, name string) (*Context, error) {
 		return nil, ErrAllocationError
 	}
 	return NewContextFromC(unsafe.Pointer(cCtx)), nil
+}
+
+func (g *Graph) AddFilterByName(name, id string) (IContext, error) {
+	filter, err := FindFilterByName(name)
+	if err != nil {
+		return nil, err
+	}
+	return g.AddFilter(filter, id)
 }
 
 func (g *Graph) Parse(filters string, input, output *InOut) error {

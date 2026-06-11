@@ -117,6 +117,7 @@ import "C"
 
 import (
 	"errors"
+	"runtime"
 	"strings"
 	"unsafe"
 
@@ -276,8 +277,27 @@ func (psd *PacketSideData) SetType(t PacketSideDataType) {
 	psd.CAVPacketSideData._type = (C.enum_AVPacketSideDataType)(t)
 }
 
+// PacketReturner is implemented by packet pools. A Packet constructed via
+// NewPacketWithReturner routes Return() back to its owning pool without the
+// call site needing a pool reference.
+type PacketReturner interface {
+	ReturnPacket(*Packet)
+}
+
+// PacketLeakObserver is an optional extension of PacketReturner. When the
+// returner implements it, the leak-safety cleanup reports every packet it
+// reclaims: hadBuffer=true means the packet was leaked while in flight
+// (its data buffer was still referenced); hadBuffer=false means a benign
+// reclaim of an idle pooled packet (e.g. sync.Pool eviction under GC
+// pressure).
+type PacketLeakObserver interface {
+	PacketLeaked(hadBuffer bool)
+}
+
 type Packet struct {
 	CAVPacket *C.AVPacket
+	returner  PacketReturner  // set once at construction; nil = foreign packet
+	cleanup   runtime.Cleanup // leak safety-net; armed iff returner != nil
 }
 
 func NewPacket() *Packet {
@@ -302,7 +322,16 @@ func NewPacketFromC(cPkt unsafe.Pointer) *Packet {
 	return &Packet{CAVPacket: (*C.AVPacket)(cPkt)}
 }
 
+// Free releases the packet and its C allocation. It must only be used on
+// foreign packets (constructed via NewPacket/NewPacketFromC); pool-owned
+// packets must go through Return so the pool can recycle them, and freeing
+// one here would leave the pool's leak-safety cleanup armed with a stale C
+// address. Pool internals that legitimately need to free a pool-owned
+// packet must sever ownership with StopCleanup first.
 func (pkt *Packet) Free() {
+	if pkt.returner != nil {
+		panic("avcodec: Free() called on a pool-owned packet; use Return()")
+	}
 	if pkt.CAVPacket != nil {
 		C.av_packet_free(&pkt.CAVPacket)
 	}
@@ -318,6 +347,98 @@ func (pkt *Packet) Ref(dst *Packet) error {
 
 func (pkt *Packet) Unref() {
 	C.av_packet_unref(pkt.CAVPacket)
+}
+
+// MakeWritable ensures the packet's data buffer is safe to mutate in place.
+// If the underlying AVBufferRef is shared with other packets it allocates a
+// private copy (copy-on-write); if the packet is already the sole owner it
+// is a cheap no-op.
+func (pkt *Packet) MakeWritable() error {
+	code := C.av_packet_make_writable(pkt.CAVPacket)
+	if code < 0 {
+		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
+	}
+	return nil
+}
+
+// NewPacketWithReturner allocates a packet owned by the given pool. The
+// packet self-identifies its pool, so call sites release it with
+// pkt.Return() and never need a pool reference. A leak-safety cleanup is
+// armed so that if the packet is dropped without being returned, its C
+// memory is still reclaimed (and reported when r implements
+// PacketLeakObserver). A nil returner yields a plain foreign packet.
+func NewPacketWithReturner(r PacketReturner) *Packet {
+	pkt := NewPacket()
+	if r == nil {
+		return pkt
+	}
+	pkt.returner = r
+	pkt.ArmLeakCleanup()
+	return pkt
+}
+
+// Return hands the packet back to its owning pool, or frees it if it has
+// no owner. The leak-safety cleanup is stopped before the pool takes over
+// so it can never fire on a C address whose ownership has moved; the pool
+// re-arms it (ArmLeakCleanup) before caching the packet.
+func (pkt *Packet) Return() {
+	if pkt.returner != nil {
+		pkt.cleanup.Stop()
+		pkt.returner.ReturnPacket(pkt)
+		return
+	}
+	pkt.Free()
+}
+
+// ArmLeakCleanup (re-)arms the leak-safety cleanup on a pool-owned packet.
+// Pools call this before caching a returned packet so that an idle packet
+// evicted by the GC still has its C allocation reclaimed. No-op on foreign
+// packets. Not safe to call concurrently with Return on the same packet.
+func (pkt *Packet) ArmLeakCleanup() {
+	if pkt.returner == nil {
+		return
+	}
+	pkt.cleanup.Stop()
+	obs, _ := pkt.returner.(PacketLeakObserver)
+	pkt.cleanup = runtime.AddCleanup(pkt, freeOnLeak, packetCleanupArg{
+		cPkt: pkt.CAVPacket,
+		obs:  obs,
+	})
+}
+
+// StopCleanup permanently severs pool ownership: it stops the leak-safety
+// cleanup and detaches the returner, turning the packet back into a
+// foreign packet on which Free is legal. Pools use this when draining
+// their caches at shutdown; it is not for general call sites.
+func (pkt *Packet) StopCleanup() {
+	if pkt.returner == nil {
+		return
+	}
+	pkt.cleanup.Stop()
+	pkt.returner = nil
+}
+
+// packetCleanupArg deliberately holds the raw C pointer rather than the Go
+// *Packet: cleanup args must not keep the cleanup's target reachable, and C
+// memory is invisible to the GC.
+type packetCleanupArg struct {
+	cPkt *C.AVPacket
+	obs  PacketLeakObserver // may be nil
+}
+
+// freeOnLeak is the leak-safety net for pool-owned packets. It runs only
+// when a pool-owned packet becomes unreachable while its cleanup is still
+// armed, i.e. it was leaked in flight or evicted from an idle pool cache.
+// The C address is exclusively owned by the dead Go packet at that point
+// (Return stops the cleanup before ownership moves, and Free on pool-owned
+// packets panics), so freeing it here cannot double-free.
+func freeOnLeak(a packetCleanupArg) {
+	cPkt := a.cPkt
+	hadBuffer := cPkt.buf != nil
+	C.av_packet_free(&cPkt)
+	if a.obs != nil {
+		a.obs.PacketLeaked(hadBuffer)
+	}
 }
 
 func (pkt *Packet) ConsumeData(size int) {

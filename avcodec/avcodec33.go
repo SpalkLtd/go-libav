@@ -58,6 +58,33 @@ func (ctx *Context) CopyTo(dst *Context) error {
 	return nil
 }
 
+// NewCodecParametersFromContext allocates a fresh CodecParameters and fills it
+// with a snapshot of ctx's codec parameters (avcodec_parameters_from_context).
+// The returned snapshot is independent of ctx and the format/stream it came
+// from, so it stays valid after the source demuxer or stream is closed. The
+// caller owns the result and must Free it.
+func NewCodecParametersFromContext(ctx *Context) (*CodecParameters, error) {
+	parameters := NewCodecParameters()
+	code := C.avcodec_parameters_from_context(parameters.CAVCodecParameters, ctx.CAVCodecContext)
+	if code < 0 {
+		parameters.Free()
+		return nil, avutil.NewErrorFromCode(avutil.ErrorCode(code))
+	}
+	return parameters, nil
+}
+
+// ToContext fills dst with these codec parameters
+// (avcodec_parameters_to_context). It is the inverse of
+// NewCodecParametersFromContext and is used to build a decoder context from a
+// previously frozen snapshot.
+func (cParams *CodecParameters) ToContext(dst *Context) error {
+	code := C.avcodec_parameters_to_context(dst.CAVCodecContext, cParams.CAVCodecParameters)
+	if code < 0 {
+		return avutil.NewErrorFromCode(avutil.ErrorCode(code))
+	}
+	return nil
+}
+
 func (ctx *Context) SendPacket(pkt *Packet) error {
 	var code C.int
 	if pkt == nil {
